@@ -15,11 +15,24 @@ topic_prompt = """
 
 facts_prompt = """
         You are tasked with taking a JSON input with Youtube transcript data and extract only the health-related facts that can be verified as either true or false. Exclude any facts that are not directly related to health or health sciences (e.g., facts about non-health-related history, politics, or general knowledge). Present the health facts in a way that is self-explanatory and does not require additional context from the original text, do not include any phrases that reference the video - replace any instance of 'it' with the actual thing. Avoid including opinions, subjective statements, or descriptive language that cannot be empirically verified, such as words like often, important, better, good, bad, typically, effective, critical, or beneficial. Avoid duplicate facts, if they have already been generated. If the transcript contains no health-related facts, return ONLY an empty dictionary. Your output should be JSON format, with key-value pairs that look like this:
-        "00:00:00.659": "Fact 1",
-        "00:00:01.659": "Fact 2",
-        "00:00:02.020": "Fact 3",
-        Here is the input:
-        {data}
+        [
+            {
+                "timestamp": "00:00:12.689",
+                "fact": "Fingernails grow twice as quickly as toenails.",
+                "search_terms": "fingernails, toenails, growth"
+            },
+            {
+                "timestamp": "00:00:19.119",
+                "fact": "Over the course of 10 years, the entire human body will regenerate an entirely new skeleton.",
+                "search_terms": "skeleton, regeneration, human body"
+            },
+            {
+                "timestamp": "00:00:32.553",
+                "fact": "The smallest bone in your body is the stapes.",
+                "search_terms": "smallest bone, stapes, body"
+            }
+        ]
+        Here is the the input transcript data:
     """
 
 safety_settings = {
@@ -65,20 +78,29 @@ def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0
     genai.configure(api_key=gemini_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
-    topic_response = model.generate_content(
-        topic_prompt.format(data=json.dumps(word_timestamps, indent=4)),
-        generation_config={"temperature": temperature})
+    # print(facts_prompt + json.dumps(word_timestamps, indent=4))
+
+    # topic_response = model.generate_content(
+    #     topic_prompt.format(data=json.dumps(word_timestamps, indent=4)),
+    #     generation_config={"temperature": temperature})
 
     facts_response = model.generate_content(
-        facts_prompt.format(data=json.dumps(word_timestamps, indent=4)),
+        facts_prompt + json.dumps(word_timestamps, indent=4),
         generation_config={"temperature": temperature},
         safety_settings=safety_settings)
 
-    matches = re.match(r'\{[^{}]*?(?:\n[^{}]*?)*\}', facts_response.text)
-    if not matches:
+    start = facts_response.text.find('[')
+    end = facts_response.text.rfind(']')
+    if start == -1 or end == -1:
         raise Exception("Invalid response from model: " + facts_response.text)
+    cleaned_facts_response = facts_response.text[start:end+1]
 
-    cleaned_facts_response = matches.group(0)
     facts_dict = json.loads(cleaned_facts_response)
-    response = {'topics': topic_response.text, 'facts': facts_dict}
-    return response
+    return facts_dict
+
+
+# load_dotenv()
+# data = get_health_facts_from_yt_url(
+#     "https://www.youtube.com/watch?v=KPh-qbnWoBA", os.getenv("GEMINI_KEY"), 0)
+# with open('output.json', 'w') as outfile:
+#     json.dump(data, outfile, indent=4)
