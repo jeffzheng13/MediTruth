@@ -100,4 +100,3 @@ yt-dlp==2024.9.27
 wcwidth==0.2.13
 wrapt==1.16.0
 xmltodict==0.13.0
-yarl==1.12.1
