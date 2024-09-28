@@ -1,3 +1,6 @@
 .venv
+venv/
 .vscode
 *.ipynb
+.env
+__pycache__/
