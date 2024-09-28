@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import time
@@ -5,6 +6,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any, Dict, Iterator, List
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from langchain_core.documents import Document
 from pydantic import BaseModel, model_validator
@@ -97,17 +99,19 @@ class CustomPubMedAPIWrapper(BaseModel):
         Return an iterator of dictionaries containing the document metadata.
         """
 
+
         url = (
             self.base_url_esearch
             + "db=pubmed&term=pubmed+pmc+open+access%5Bfilter%5D+"
             + str({urllib.parse.quote(query)})
-            + f"&retmode=json&retmax={self.top_k_results}&usehistory=y"
+            + f"&retmode=json&sort=relevance&retmax={self.top_k_results}&usehistory=n"
         )
         result = urllib.request.urlopen(url)
         text = result.read().decode("utf-8")
         json_text = json.loads(text)
 
-        webenv = json_text["esearchresult"]["webenv"]
+        #webenv = json_text["esearchresult"]["webenv"]
+        webenv = ""
         for uid in json_text["esearchresult"]["idlist"]:
             yield self.retrieve_article(uid, webenv)
 
@@ -146,6 +150,14 @@ class CustomPubMedAPIWrapper(BaseModel):
         while True:
             try:
                 result = urllib.request.urlopen(url)
+                xml_text = result.read().decode("utf-8")
+                text_dict = self.parse(xml_text)
+
+                # Check for errors in the response
+                if "pmc-articleset" in text_dict:
+                    if "Reply" in text_dict["pmc-articleset"] and "@error" in text_dict["pmc-articleset"]["Reply"]:
+                        continue
+                    
                 break
             except urllib.error.HTTPError as e:
                 if e.code == 429 and retry < self.max_retry:
@@ -161,50 +173,51 @@ class CustomPubMedAPIWrapper(BaseModel):
                 else:
                     raise e
 
-        xml_text = result.read().decode("utf-8")
-        text_dict = self.parse(xml_text)
         return self._parse_article(uid, text_dict)
 
+    def extract_p_and_text(self, data: dict) -> List[str]:
+        results = []
+        if isinstance(data, list):
+            for item in data:
+                if 'p' in item:
+                    if isinstance(item['p'], list):
+                        for p_item in item['p']:
+                            if isinstance(p_item, dict) and '#text' in p_item:
+                                results.append(p_item['#text'])
+                            elif isinstance(p_item, str):  # In case 'p' is a string
+                                results.append(p_item)
+                # Check for nested sections
+                if 'sec' in item:
+                    results.extend(self.extract_p_and_text(item['sec']))
+        return results
+    
     def _parse_article(self, uid: str, text_dict: dict) -> dict:
         try:
-            ar = text_dict["PubmedArticleSet"]["PubmedArticle"]["MedlineCitation"][
-                "Article"
-            ]
+            data = text_dict["pmc-articleset"]["article"]["body"]["sec"]
+            meta = text_dict["pmc-articleset"]["article"]["front"]["article-meta"]
         except KeyError:
-            ar = text_dict["PubmedArticleSet"]["PubmedBookArticle"]["BookDocument"]
-        abstract_text = ar.get("Abstract", {}).get("AbstractText", [])
-        summaries = [
-            f"{txt['@Label']}: {txt['#text']}"
-            for txt in abstract_text
-            if "#text" in txt and "@Label" in txt
-        ]
-        summary = (
-            "\n".join(summaries)
-            if summaries
-            else (
-                abstract_text
-                if isinstance(abstract_text, str)
-                else (
-                    "\n".join(str(value) for value in abstract_text.values())
-                    if isinstance(abstract_text, dict)
-                    else "No abstract available"
-                )
-            )
-        )
-        a_d = ar.get("ArticleDate", {})
+            print("KeyError")
+            return {}
+        
+
+
+        # Extract text from the articles
+        extracted_texts = self.extract_p_and_text(data)
+        extracted_text = " ".join(extracted_texts)
+
+        # Get the title
+        title = meta.get("title-group", {}).get("article-title", "")
+
+        # Get the publication date
+        a_d = meta.get("pub-date", [{}])[0]
         pub_date = "-".join(
-            [a_d.get("Year", ""), a_d.get("Month", ""), a_d.get("Day", "")]
+            [a_d.get("year", ""), a_d.get("month", ""), a_d.get("day", "")]
         )
 
         return {
             "uid": uid,
-            "Title": ar.get("ArticleTitle", ""),
+            "Title": title,
             "Published": pub_date,
-            "Copyright Information": ar.get("Abstract", {}).get(
-                "CopyrightInformation", ""
-            ),
-            "Summary": summary,
+            "Copyright Information": "",
+            "Summary": extracted_text,
         }
-
-
-result = CustomPubMedAPIWrapper().load_docs("kidney tranplant")
