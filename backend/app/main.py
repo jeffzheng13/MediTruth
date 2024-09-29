@@ -2,10 +2,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-from yt_to_facts import get_health_facts_from_yt_url
-from pubmed import CustomPubMedAPIWrapper
-from connectMongo import MongoWrapper
-from factCheck import fact_check
+from app.yt_to_facts import get_health_facts_from_yt_url
+from app.pubmed import CustomPubMedAPIWrapper
+from app.connectMongo import MongoWrapper
+from app.factCheck import fact_check
 import re
 
 load_dotenv()
