@@ -37,7 +37,7 @@ async function updateVideo() {
     // Call backend to get facts, timestamps
     const encodedUrl = encodeURIComponent(videoURL);
     try {
-        const response = await fetch(`https://meditruth-1075353791409.us-central1.run.app/check_facts?url=${encodedUrl}`);
+        const response = await fetch(`https://meditruth-image-1075353791409.us-central1.run.app/check_facts?url=${encodedUrl}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

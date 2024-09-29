@@ -11,7 +11,7 @@ import re
 load_dotenv()
 app = Flask(__name__)
 # Enable CORS for all routes
-CORS(app, origins=[os.getenv("FRONTEND_URL")])
+CORS(app)
 gemini_key = os.getenv("GEMINI_API_KEY")
 
 
