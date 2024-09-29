@@ -11,6 +11,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from pydantic import BaseModel, model_validator
 from metapub import pubmedcentral
+from langchain_community.utilities.pubmed import PubMedAPIWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,14 @@ class CustomPubMedAPIWrapper(BaseModel):
 
     def lazy_load_docs(self, query: str) -> Iterator[Document]:
         for d in self.lazy_load(query=query):
+            yield self._dict2document(d)
+        wrapper2 = PubMedAPIWrapper()
+        wrapper2.base_url_efetch = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?sort=relevance&"
+        wrapper2.base_url_esearch = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?sort=relevance&"
+        wrapper2.sleep_time = 0.5
+        wrapper2.max_retry = 5
+
+        for d in wrapper2.lazy_load(query=query):
             yield self._dict2document(d)
 
     def load_docs(self, query: str) -> List[Document]:
