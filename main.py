@@ -17,7 +17,7 @@ wrapper2.base_url_esearch = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esear
 wrapper2.sleep_time = 0.5
 
 mongo_conn = MongoWrapper()
-for info in facts[0:1]:
+for info in facts[1:2]:
     terms = info["search_terms"]
     try: 
         docIterator = wrapper.load_docs(terms)
@@ -28,4 +28,5 @@ for info in facts[0:1]:
         mongo_conn.add_to_vector_store(docIterator2)
     print(terms)
     print(info["fact"])
+    print(mongo_conn.retrieve_vector_store(info["fact"]))
     
