@@ -7,10 +7,12 @@ import json
 load_dotenv()
 
 topic_prompt = """
-        You are tasked with taking a JSON input with multiple research papers data and a question regarding the information in the data, then returning if the question I gave to you was true or false. If you can not conclude anything with the question, you must return output as 'inconclusive'. Otherwise, return output as 'true' or 'false' with a reason as a summary of why it is true or false. The output should be in JSON format, with key-value pairs that look like this: 
+        You are tasked with taking a JSON input with multiple research papers data and a question regarding the information in the data, then returning if the question I gave to you was true or false. If you can not conclude anything with the question, you must return value as 'inconclusive'. Otherwise, return value as 'true' or 'false' with a description as a summary of why it is true or false, title as article title, and similarity as the second value in Document. The output should be in JSON format, with key-value pairs that look like this: 
         {{
-            'output': '',
-            'reason': ''
+            'value': '',
+            'description': '',
+            'title': '',
+            'similarity': ''
         }}
 
         Your input will be a JSON object with the following format where your reasearch paper data for each document is in the page_content field:

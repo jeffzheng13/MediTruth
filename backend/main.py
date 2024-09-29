@@ -11,12 +11,9 @@ from langchain_community.utilities.pubmed import PubMedAPIWrapper
 def main():
     load_dotenv()
     facts = get_health_facts_from_yt_url("https://www.youtube.com/watch?v=KPh-qbnWoBA&t=4s", os.getenv("GOOGLE_API_KEY"))
-
+    print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+    print(facts)
     wrapper = CustomPubMedAPIWrapper()
-    wrapper2 = PubMedAPIWrapper()
-    wrapper2.base_url_efetch = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?sort=relevance&"
-    wrapper2.base_url_esearch = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?sort=relevance&"
-    wrapper2.sleep_time = 0.5
 
     mongo_conn = MongoWrapper()
     for info in facts[1:2]:
