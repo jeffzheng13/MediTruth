@@ -10,7 +10,7 @@ from langchain_community.utilities.pubmed import PubMedAPIWrapper
 
 def main():
     load_dotenv()
-    facts = get_health_facts_from_yt_url("https://www.youtube.com/watch?v=KPh-qbnWoBA&t=4s", os.getenv("GOOGLE_API_KEY"))
+    facts = get_health_facts_from_yt_url("https://www.youtube.com/watch?v=KPh-qbnWoBA&t=4s", os.getenv("GEMINI_API_KEY"))
     print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
     print(facts)
     wrapper = CustomPubMedAPIWrapper()
