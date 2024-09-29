@@ -1,0 +1,33 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main  # Change this to the branch you want to monitor for new pushes
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Extract frontend folder
+        run: |
+          mkdir frontend-extract
+          cp -r frontend/* frontend-extract/
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push frontend folder
+        run: |
+          git checkout -b frontend-branch
+          git add frontend-extract
+          git commit -m "Deploy frontend folder"
+          git push -u origin frontend-branch --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
