@@ -42,7 +42,7 @@ def check_facts():
         try:
             research_data = mongo_conn.retrieve_vector_store(fact["fact"])
             #skip pubmed if good enough confidence
-            if len([score for _, score in research_data if score >= 0.8]) != 3:
+            if len([score for _, score in research_data if score >= 0.8]) != 2:
                 docIterator = wrapper.load_docs(terms)
                 mongo_conn.add_to_vector_store(docIterator)
                 research_data = mongo_conn.retrieve_vector_store(fact["fact"])
@@ -60,3 +60,4 @@ def check_facts():
 
 if __name__ == '__main__':
     app.run(debug=True)
+  
