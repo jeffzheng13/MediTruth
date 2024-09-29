@@ -1,4 +1,3 @@
-from util import ms_to_hmsms
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
@@ -17,17 +16,17 @@ facts_prompt = """
         You are tasked with taking a JSON input with Youtube transcript data and extract only the health-related facts that can be verified as either true or false. Exclude any facts that are not directly related to health or health sciences (e.g., facts about non-health-related history, politics, or general knowledge). Present the health facts in a way that is self-explanatory and does not require additional context from the original text, do not include any phrases that reference the video - replace any instance of 'it' with the actual thing. Avoid including opinions, subjective statements, or descriptive language that cannot be empirically verified, such as words like often, important, better, good, bad, typically, effective, critical, or beneficial. Avoid duplicate facts, if they have already been generated. If the transcript contains no health-related facts, return ONLY an empty dictionary. Your output should be JSON format, with key-value pairs that look like this:
         [
             {
-                "timestamp": "00:00:12.689",
+                "timestamp": 12689,
                 "fact": "Fingernails grow twice as quickly as toenails.",
                 "search_terms": "fingernails, toenails, growth"
             },
             {
-                "timestamp": "00:00:19.119",
+                "timestamp": 19119,
                 "fact": "Over the course of 10 years, the entire human body will regenerate an entirely new skeleton.",
                 "search_terms": "skeleton, regeneration, human body"
             },
             {
-                "timestamp": "00:00:32.553",
+                "timestamp": 32553,
                 "fact": "The smallest bone in your body is the stapes.",
                 "search_terms": "smallest bone, stapes, body"
             }
@@ -62,6 +61,9 @@ def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0
         json3_captions = [x for x in combined_captions if x['ext'] == 'json3']
         json3_urls = [x['url'] for x in json3_captions]
 
+        if json3_urls == []:
+            return {}
+
         captions = requests.get(json3_urls[0]).json()
 
         word_timestamps = {}
@@ -72,13 +74,13 @@ def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0
                     word_timestamp = base_timestamp + seg.get('tOffsetMs', 0)
                     word = seg['utf8'].replace('\n', '').strip()
                     if word:
-                        word_timestamps[ms_to_hmsms(word_timestamp)] = word
+                        word_timestamps[word_timestamp] = word
 
     # 2. setup gemini and prompt
     genai.configure(api_key=gemini_key)
     model = genai.GenerativeModel('gemini-1.5-flash')
 
-    # print(facts_prompt + json.dumps(word_timestamps, indent=4))
+    print(facts_prompt + json.dumps(word_timestamps, indent=4))
 
     # topic_response = model.generate_content(
     #     topic_prompt.format(data=json.dumps(word_timestamps, indent=4)),
