@@ -14,17 +14,6 @@ CORS(app)  # Enable CORS for all routes
 gemini_key = os.getenv("GEMINI_API_KEY")
 
 
-@app.route('/get_facts', methods=['GET'])
-def get_facts():
-    # /get_facts?url=https://youtube.com/id
-    url = request.args.get('url')
-    if not url:
-        return jsonify({"error": "URL parameter is required"}), 400
-
-    data = get_health_facts_from_yt_url(url, gemini_key)
-
-    return jsonify(data)
-
 @app.route('/check_facts', methods=['GET'])
 def check_facts():
     # /check_facts?url=https://youtube.com/id
@@ -41,18 +30,20 @@ def check_facts():
 
     for fact in facts:
         terms = fact["search_terms"]
-        try: 
+        try:
             docIterator = wrapper.load_docs(terms)
             mongo_conn.add_to_vector_store(docIterator)
         except Exception as e:
             pass
 
         research_data = mongo_conn.retrieve_vector_store(fact["fact"])
-        output = fact_check(research_data, fact["fact"], gemini_key=gemini_key, temperature=0)
+        output = fact_check(
+            research_data, fact["fact"], gemini_key=gemini_key, temperature=0)
         combined_result = {**fact, **output}
         result.append(combined_result)
 
     return jsonify(result), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
