@@ -46,7 +46,7 @@ def check_facts():
 
         research_data = mongo_conn.retrieve_vector_store(fact["fact"])
         output = fact_check(
-            research_data, fact["fact"], gemini_key=gemini_key, temperature=0)
+            research_data, fact["fact"], temperature=0)
         combined_result = {**fact, **output}
         result.append(combined_result)
 

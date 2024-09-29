@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from dotenv import load_dotenv
 import os
 from uuid import uuid4
 
@@ -13,8 +12,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # from langchain_core.embeddings import FakeEmbeddings
 # embeddings = FakeEmbeddings(size=4096)
 class MongoWrapper():
-    load_dotenv()
-
     client = MongoClient(os.getenv("MONGODB_ATLAS_CLUSTER_URI"))
     db_name = os.getenv("DB_NAME")
     collection_name = os.getenv("COLLECTION_NAME")

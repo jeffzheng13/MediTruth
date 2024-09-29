@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
@@ -42,7 +41,7 @@ safety_settings = {
 }
 
 
-def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0, ):
+def get_health_facts_from_yt_url(url: str, temperature: int = 0, ):
     ydl_opts = {
         'format': 'm4a/bestaudio/best',
     }
@@ -77,7 +76,7 @@ def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0
                         word_timestamps[word_timestamp] = word
 
     # 2. setup gemini and prompt
-    genai.configure(api_key=gemini_key)
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel('gemini-1.5-flash')
 
     print(facts_prompt + json.dumps(word_timestamps, indent=4))
@@ -99,10 +98,3 @@ def get_health_facts_from_yt_url(url: str, gemini_key: str, temperature: int = 0
 
     facts_dict = json.loads(cleaned_facts_response)
     return facts_dict
-
-
-# load_dotenv()
-# data = get_health_facts_from_yt_url(
-#     "https://www.youtube.com/watch?v=KPh-qbnWoBA", os.getenv("GEMINI_KEY"), 0)
-# with open('output.json', 'w') as outfile:
-#     json.dump(data, outfile, indent=4)

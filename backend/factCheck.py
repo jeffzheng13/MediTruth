@@ -1,10 +1,7 @@
-from dotenv import load_dotenv
 import os
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
-
-load_dotenv()
 
 topic_prompt = """
         You are tasked with taking a JSON input with multiple research papers data and a question regarding the information in the data, then returning if the question I gave to you was true or false. If you can not conclude anything with the question, you must return value as 'inconclusive'. Otherwise, return value as 'true' or 'false' with a description as a summary of why it is true or false, title as article title, and similarity as the second value in Document. The output should be in JSON format, with key-value pairs that look like this: 
@@ -53,9 +50,9 @@ safety_settings = {
     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE
 }
 
-def fact_check(research_data, question, gemini_key, temperature=0.5):
+def fact_check(research_data, question, temperature=0.5):
     # 2. setup gemini and prompt
-    genai.configure(api_key=gemini_key)
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel('gemini-1.5-flash')
 
     # 3. generate facts

@@ -35,7 +35,7 @@ def main():
         research_data = mongo_conn.retrieve_vector_store(info["fact"])
         print(research_data)
 
-        faxsfr = fact_check(research_data, info["fact"], gemini_key=os.getenv("GEMINI_KEY"), temperature=0)
+        faxsfr = fact_check(research_data, info["fact"], temperature=0)
         print(faxsfr)
 
 
