@@ -9,6 +9,9 @@ jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # Grant write permissions to the GITHUB_TOKEN
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -23,11 +26,13 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit and push frontend folder
+      - name: Commit and push frontend folder to gh-pages
         run: |
-          git checkout -b frontend-branch
-          git add frontend-extract
-          git commit -m "Deploy frontend folder"
-          git push -u origin frontend-branch --force
+          git checkout --orphan gh-pages
+          git reset --hard
+          cp -r frontend-extract/* .
+          git add .
+          git commit -m "Deploy frontend folder to GitHub Pages"
+          git push -u origin gh-pages --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
