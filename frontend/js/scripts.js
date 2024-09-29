@@ -75,7 +75,7 @@ function createAccordionItem(index, fact, description, timestamp, citation, titl
     } else if (value === "false") {
         valueColor = "red";
     } else {
-        valueColor = "yellow";
+        valueColor = "GoldenRod";
     }
 
     return `<div class="accordion-item">

@@ -69,7 +69,7 @@ function createAccordionItem(
               <a href="${citation}" target="_blank">${title}</a>
             </div>
             <div class="similarity">
-              Similarity: ${similarity}
+              Confidence: ${similarity}
             </div>
           </div>
         </div>
