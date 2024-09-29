@@ -15,7 +15,6 @@ def main():
     print(facts)
     wrapper = CustomPubMedAPIWrapper()
 
-
     mongo_conn = MongoWrapper()
     for info in facts[1:2]:
         terms = info["search_terms"]
