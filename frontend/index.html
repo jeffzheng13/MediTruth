@@ -71,23 +71,41 @@
                     Fact Check
                 </button>
             </form>
+            <div class="row justify-content-center my-4">
+                <div
+                    class="col-md-8 text-center"
+                    style="
+                        font-size: 1rem;
+                        margin-top: 20px;
+                        margin-bottom: 20px;
+                    "
+                >
+                    <p>
+                        <strong>[TITLE OF PROJECT]</strong> analyzes
+                        health-related YouTube videos & shorts for
+                        misinformation, extracting information provided in the
+                        video and performing fact-checks.
+                    </p>
+                </div>
+            </div>
             <div
-                class="row justify-content-center align-items-center"
-                style="height: 80vh"
+                id="loading-indicator"
+                style="display: none"
+                class="justify-content-center"
+            >
+                <div
+                    class="spinner-border justify-content-center"
+                    role="status"
+                ></div>
+            </div>
+            <div
+                id="main-content"
+                class="row justify-content-center align-items-start"
+                style="height: 80vh; display: none"
             >
                 <div class="col-md-6 d-flex justify-content-center">
-                    <!-- YouTube video embed for the first column -->
-                    <iframe
-                        id="youtube-video"
-                        width="100%"
-                        height="350"
-                        src="https://www.youtube.com/embed/404"
-                        title="YouTube video player"
-                        frameborder="0"
-                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                        style="border-radius: 0.5rem; border: 1px solid #ddd"
-                    ></iframe>
+                    <!-- YouTube player in the left column -->
+                    <div id="player"></div>
                 </div>
                 <div class="col-md-6 d-flex justify-content-center">
                     <!-- Accordion in the right column -->
@@ -137,14 +155,58 @@
         <script type="text/javascript" src="js/components.js"></script>
 
         <script type="text/javascript">
+            // Load the IFrame Player API asynchronously
+            var videoURL = "https://www.youtube.com/embed/404";
+            var videoId = videoURL.split("/").pop();
+            var tag = document.createElement("script");
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName("script")[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var player;
+
+            // This function creates an <iframe> (and YouTube player) after the API code downloads.
+            function onYouTubeIframeAPIReady() {
+                videoURL = document.getElementById("video-url").value;
+                console.log(videoURL);
+                player = new YT.Player("player", {
+                    height: "315",
+                    width: "560",
+                    videoId: videoId,
+                    events: {
+                        onReady: onPlayerReady,
+                    },
+                });
+                console.log(player);
+            }
+
+            // The API will call this function when the video player is ready.
+            function onPlayerReady(event) {
+                // Optional: Auto-play the video once the player is ready
+                // event.target.playVideo();
+                console.log("Player is ready");
+            }
+
+            // Function to seek to a specific timestamp and play the video
+            function scrubVideoTo(seconds) {
+                const s = parseInt(seconds);
+                console.log(s);
+                player.seekTo(s, true);
+                player.playVideo();
+            }
             async function updateVideo() {
-                const videoUrl = document.getElementById("video-url").value;
-                const embedUrl = videoUrl.includes("watch?v=")
-                    ? videoUrl.replace("watch?v=", "embed/")
+                console.log("here");
+                videoURL = document.getElementById("video-url").value;
+                const embedUrl = videoURL.includes("watch?v=")
+                    ? videoURL.replace("watch?v=", "embed/")
                     : "https://www.youtube.com/embed/404";
 
+                document.getElementById("loading-indicator").style.display =
+                    "flex";
+                document.getElementById("main-content").style.display = "none";
+
                 // Call backend to get facts, timestamps
-                const encodedUrl = encodeURIComponent(videoUrl);
+                const encodedUrl = encodeURIComponent(videoURL);
                 try {
                     const response = await fetch(
                         `http://127.0.0.1:5000/get_facts?url=${encodedUrl}`
@@ -167,7 +229,6 @@
                                 Math.floor(parseFloat(item.timestamp) / 1000),
                                 item.citation,
                                 item.title,
-                                item.similarity,
                                 `${(item.similarity * 100).toFixed(2)}%`,
                                 item.value
                             )
@@ -177,7 +238,63 @@
                     console.error("Error fetching facts:", error);
                 }
 
-                document.getElementById("youtube-video").src = embedUrl;
+                videoURL = document.getElementById("video-url").value;
+                videoId = videoURL.replace(
+                    "https://www.youtube.com/watch?v=",
+                    ""
+                );
+                player.loadVideoById(videoId);
+
+                document.getElementById("loading-indicator").style.display =
+                    "none";
+                document.getElementById("main-content").style.display = "flex";
+            }
+
+            function createAccordionItem(
+                index,
+                fact,
+                description,
+                timestamp,
+                citation,
+                title,
+                similarityPercentage,
+                value
+            ) {
+                const valueColor = value ? "green" : "red";
+
+                return `<div class="accordion-item">
+                <h2 class="accordion-header" id="heading${index}">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-mdb-toggle="collapse"
+                    data-mdb-target="#collapse${index}"
+                    aria-expanded="false"
+                    aria-controls="collapse${index}"
+                    onclick="scrubVideoTo(${timestamp})"
+                  >
+                    <i class="fas fa-info-circle" style="color: ${valueColor}"></i>
+                    <span class="ms-2">${fact}</span>
+                  </button>
+                </h2>
+                <div
+                  id="collapse${index}"
+                  class="accordion-collapse collapse"
+                  aria-labelledby="heading${index}"
+                  data-mdb-parent="#accordionExample"
+                  data-seconds="${timestamp}"
+                >
+                  <div class="accordion-body">
+                    ${description}
+                    <div class="citation">
+                      <a href="${citation}" target="_blank">${title}</a>
+                    </div>
+                    <div class="similarity">
+                      Similarity: ${similarityPercentage}
+                    </div>
+                  </div>
+                </div>
+              </div>`;
             }
         </script>
     </body>

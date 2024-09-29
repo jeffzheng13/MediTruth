@@ -1,34 +1,32 @@
-// function createAccordionItem(id, fact, description, seconds) {
-//     return `
-//       <div class="accordion-item">
-//         <h2 class="accordion-header" id="heading${id}">
-//           <button
-//             class="accordion-button"
-//             type="button"
-//             data-mdb-toggle="collapse"
-//             data-mdb-target="#collapse${id}"
-//             aria-expanded="true"
-//             aria-controls="collapse${id}"
-//           >
-//             <i class="fas fa-check-circle" style="color: green"></i>
-//             <span class="ms-2">${fact}</span>
-//           </button>
-//         </h2>
-//         <div
-//           id="collapse${id}"
-//           class="accordion-collapse collapse show"
-//           aria-labelledby="heading${id}"
-//           data-mdb-parent="#accordionExample"
-//           data-seconds="${seconds}"
-//         >
-//           <div class="accordion-body">
-//             ${description}
-//             <strong style="color: green">${fact}</strong>
-//           </div>
-//         </div>
-//       </div>
-//     `;
-// }
+let player;
+
+// Load the IFrame Player API code asynchronously.
+const tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName("script")[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// Replace the 'youtube-video' element with an <iframe> and YouTube player after the API code downloads.
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player("youtube-video", {
+        events: {
+            onReady: onPlayerReady,
+        },
+    });
+}
+
+function onPlayerReady(event) {
+    // Player is ready
+}
+
+function scrubVideoTo(seconds) {
+    if (player && player.seekTo) {
+        player.seekTo(seconds, true);
+        player.playVideo();
+    } else {
+        console.error("YouTube player is not initialized.");
+    }
+}
 
 function createAccordionItem(
     id,
@@ -85,3 +83,5 @@ function handleAccordionClick(seconds) {
     const urlWithTimestamp = `${videoUrl}?start=${seconds}&autoplay=1`;
     document.getElementById("youtube-video").src = urlWithTimestamp;
 }
+
+export { scrubVideoTo };
