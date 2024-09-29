@@ -4,3 +4,4 @@ venv/
 *.ipynb
 .env
 __pycache__/
+.prettierrc
