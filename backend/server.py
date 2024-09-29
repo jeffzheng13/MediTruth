@@ -38,13 +38,18 @@ def check_facts():
 
     for fact in facts:
         terms = fact["search_terms"]
+        research_data = []
         try:
-            docIterator = wrapper.load_docs(terms)
-            mongo_conn.add_to_vector_store(docIterator)
+            research_data = mongo_conn.retrieve_vector_store(fact["fact"])
+            #skip pubmed if good enough confidence
+            if len([score for _, score in research_data if score >= 0.8]) != 3:
+                docIterator = wrapper.load_docs(terms)
+                mongo_conn.add_to_vector_store(docIterator)
+                research_data = mongo_conn.retrieve_vector_store(fact["fact"])
+
         except Exception as e:
             pass
-
-        research_data = mongo_conn.retrieve_vector_store(fact["fact"])
+        
         output = fact_check(
             research_data, fact["fact"], temperature=0)
         combined_result = {**fact, **output}

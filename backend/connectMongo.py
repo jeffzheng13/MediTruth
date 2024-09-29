@@ -63,7 +63,7 @@ class MongoWrapper():
         # return retriever.invoke(query)
         results = self.vector_store.similarity_search_with_score(query, k=3)
         # filtering by 0.5
-        results = [results for _, score in results if score >= 0.5]
+        results = [(result, score) for result, score in results if score >= 0.5]
 
         return results
 
