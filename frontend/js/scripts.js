@@ -1,76 +1,133 @@
-import { createAccordionItem } from "./components.js";
+// Load the IFrame Player API asynchronously
+var videoURL = "https://www.youtube.com/embed/404";
+var videoId = videoURL.split("/").pop();
+var tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName("script")[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-function scrubVideoTo(seconds) {
-    const videoUrl = document.getElementById("youtube-video").src;
-    const urlWithTimestamp = `${videoUrl}?start=${seconds}`;
-    document.getElementById("youtube-video").src = urlWithTimestamp;
+var player;
+
+// This function creates an <iframe> (and YouTube player) after the API code downloads.
+function onYouTubeIframeAPIReady() {
+    videoURL = document.getElementById("video-url").value;
+    console.log(videoURL);
+    player = new YT.Player("player", {
+        height: "315",
+        width: "560",
+        videoId: videoId,
+        events: {
+            onReady: onPlayerReady,
+        },
+    });
+    console.log(player);
 }
 
-function updateVideo() {
-    const videoUrl = document.getElementById("video-url").value;
-    const embedUrl = videoUrl.includes("watch?v=")
-        ? videoUrl.replace("watch?v=", "embed/")
+// The API will call this function when the video player is ready.
+function onPlayerReady(event) {
+    // Optional: Auto-play the video once the player is ready
+    // event.target.playVideo();
+    console.log("Player is ready");
+}
+
+// Function to seek to a specific timestamp and play the video
+function scrubVideoTo(seconds) {
+    const s = parseInt(seconds);
+    console.log(s);
+    player.seekTo(s, true);
+    player.playVideo();
+}
+async function updateVideo() {
+    console.log("here");
+    videoURL = document.getElementById("video-url").value;
+    const embedUrl = videoURL.includes("watch?v=")
+        ? videoURL.replace("watch?v=", "embed/")
         : "https://www.youtube.com/embed/404";
 
-    // Call backend to get facts, timestamps
-    const data = [
-        {
-            timestamp: "00:00:12.689",
-            fact: "Fingernails grow twice as quickly as toenails.",
-            value: true,
-            citation: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2565713/",
-            title: "The Dynamic Skeleton",
-            description:
-                "This paper discusses the regeneration of bone tissue.",
-        },
-        {
-            timestamp: "00:00:19.119",
-            fact: "The human body skeleton does not regenerate.",
-            value: false,
-            citation: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2565713/",
-            title: "The Dynamic Skeleton",
-            description:
-                "Over the course of 10 years, the entire human body will regenerate an entirely new skeleton.",
-        },
-        {
-            timestamp: "00:00:32.553",
-            fact: "The smallest bone in your body is the stapes.",
-            value: true,
-            citation: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2565713/",
-            title: "The Dynamic Skeleton",
-            description:
-                "This paper discusses the anatomy and function of the stapes bone in the human ear.",
-        },
-    ];
-    const parsedData = data.map((item) => {
-        const timeParts = item.timestamp.split(":");
-        const seconds =
-            parseInt(timeParts[0]) * 3600 +
-            parseInt(timeParts[1]) * 60 +
-            Math.floor(parseFloat(timeParts[2]));
-        return { ...item, timestamp: seconds };
-    });
+    document.getElementById("loading-indicator").style.display = "flex";
+    document.getElementById("main-content").style.display = "none";
 
-    const accordionContainer = document.getElementById("accordionExample");
-    accordionContainer.innerHTML = parsedData
-        .map((item, index) =>
-            createAccordionItem(
-                index,
-                item.fact,
-                item.description,
-                item.timestamp,
-                item.citation,
-                item.title,
-                item.value
+    // Call backend to get facts, timestamps
+    const encodedUrl = encodeURIComponent(videoURL);
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:5000/get_facts?url=${encodedUrl}`
+        );
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(data);
+        const accordionContainer = document.getElementById("accordionExample");
+        accordionContainer.innerHTML = data
+            .map((item, index) =>
+                createAccordionItem(
+                    index,
+                    item.fact,
+                    item.description,
+                    Math.floor(parseFloat(item.timestamp) / 1000),
+                    item.citation,
+                    item.title,
+                    `${(item.similarity * 100).toFixed(2)}%`,
+                    item.value
+                )
             )
-        )
-        .join("");
-    document.getElementById("youtube-video").src = embedUrl;
+            .join("");
+    } catch (error) {
+        console.error("Error fetching facts:", error);
+    }
+
+    videoURL = document.getElementById("video-url").value;
+    videoId = videoURL.replace("https://www.youtube.com/watch?v=", "");
+    player.loadVideoById(videoId);
+
+    document.getElementById("loading-indicator").style.display = "none";
+    document.getElementById("main-content").style.display = "flex";
 }
 
-document.querySelectorAll(".accordion-collapse").forEach((element) => {
-    element.addEventListener("shown.bs.collapse", function () {
-        const seconds = element.getAttribute("data-seconds");
-        scrubVideoTo(seconds);
-    });
-});
+function createAccordionItem(
+    index,
+    fact,
+    description,
+    timestamp,
+    citation,
+    title,
+    similarityPercentage,
+    value
+) {
+    const valueColor = value ? "green" : "red";
+
+    return `<div class="accordion-item">
+    <h2 class="accordion-header" id="heading${index}">
+      <button
+        class="accordion-button collapsed"
+        type="button"
+        data-mdb-toggle="collapse"
+        data-mdb-target="#collapse${index}"
+        aria-expanded="false"
+        aria-controls="collapse${index}"
+        onclick="scrubVideoTo(${timestamp})"
+      >
+        <i class="fas fa-info-circle" style="color: ${valueColor}"></i>
+        <span class="ms-2">${fact}</span>
+      </button>
+    </h2>
+    <div
+      id="collapse${index}"
+      class="accordion-collapse collapse"
+      aria-labelledby="heading${index}"
+      data-mdb-parent="#accordionExample"
+      data-seconds="${timestamp}"
+    >
+      <div class="accordion-body">
+        ${description}
+        <div class="citation">
+          <a href="${citation}" target="_blank">${title}</a>
+        </div>
+        <div class="similarity">
+          Similarity: ${similarityPercentage}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
