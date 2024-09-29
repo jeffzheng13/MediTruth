@@ -50,7 +50,7 @@ safety_settings = {
     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE
 }
 
-def fact_check(research_data, question, temperature=0.5):
+def fact_check(research_data, question, temperature=0):
     # 2. setup gemini and prompt
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel('gemini-1.5-flash')

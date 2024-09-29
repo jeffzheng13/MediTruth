@@ -21,12 +21,12 @@ def health_check():
 # /check_facts?url=https://youtube.com/id
 def check_facts():
     url = request.args.get('url')
-    yt_regex = re.compile(r'^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*')
+    # yt_regex = re.compile(r'^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*')
     if not url:
         return jsonify({"error": "No YouTube link provided"}), 400
 
-    if not yt_regex.match(url):
-        return jsonify({"error": "Invalid YouTube link"}), 400
+    # if not yt_regex.match(url):
+    #     return jsonify({"error": "Invalid YouTube link"}), 400
 
 
     facts = get_health_facts_from_yt_url(url, gemini_key)
@@ -42,7 +42,8 @@ def check_facts():
         try:
             research_data = mongo_conn.retrieve_vector_store(fact["fact"])
             #skip pubmed if good enough confidence
-            if len([score for _, score in research_data if score >= 0.8]) != 3:
+            print(research_data)
+            if len([score for _, score in research_data if score >= 0.8]) == 0:
                 docIterator = wrapper.load_docs(terms)
                 mongo_conn.add_to_vector_store(docIterator)
                 research_data = mongo_conn.retrieve_vector_store(fact["fact"])

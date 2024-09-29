@@ -40,8 +40,8 @@ function scrubVideoTo(seconds) {
 async function updateVideo() {
     console.log("here");
     videoURL = document.getElementById("video-url").value;
-    const embedUrl = videoURL.includes("watch?v=")
-        ? videoURL.replace("watch?v=", "embed/")
+    const embedUrl = videoURL.includes("watch?v=") || videoURL.includes("shorts/")
+        ? videoURL.replace("watch?v=", "embed/").replace("shorts/", "embed/")
         : "https://www.youtube.com/embed/404";
 
     document.getElementById("loading-indicator").style.display = "flex";
@@ -51,7 +51,7 @@ async function updateVideo() {
     const encodedUrl = encodeURIComponent(videoURL);
     try {
         const response = await fetch(
-            `http://127.0.0.1:5000/get_facts?url=${encodedUrl}`
+            `http://127.0.0.1:5000/check_facts?url=${encodedUrl}`
         );
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -78,7 +78,7 @@ async function updateVideo() {
     }
 
     videoURL = document.getElementById("video-url").value;
-    videoId = videoURL.replace("https://www.youtube.com/watch?v=", "");
+    videoId = videoURL.replace("https://www.youtube.com/watch?v=", "").replace("https://www.youtube.com/shorts/", "");
     player.loadVideoById(videoId);
 
     document.getElementById("loading-indicator").style.display = "none";
@@ -95,7 +95,16 @@ function createAccordionItem(
     similarityPercentage,
     value
 ) {
-    const valueColor = value ? "green" : "red";
+    if (value === "true") {
+        valueColor = "green";
+    }
+    else if (value === "false") 
+    {
+        valueColor = "red";
+    }
+     else {
+        valueColor = "yellow"
+    }
 
     return `<div class="accordion-item">
     <h2 class="accordion-header" id="heading${index}">
