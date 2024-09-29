@@ -24,7 +24,7 @@ class MongoWrapper():
     vector_store = MongoDBAtlasVectorSearch(
         collection=MONGODB_COLLECTION,
         embedding=gemini_embeddings,
-        #index_name=atlas_vector_search_index_name,
+        index_name=atlas_vector_search_index_name,
     )
 
     def add_to_vector_store(self, documents: List[Document]):
@@ -32,13 +32,15 @@ class MongoWrapper():
         self.vector_store.add_documents(documents=documents, ids=uuids)
 
     def retrieve_vector_store(self, query):
-        retriever = self.vector_store.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={"k":3, "score_threshold":0.3}
-        )
+        # retriever = self.vector_store.as_retriever(
+        #     search_type="similarity_score_threshold",
+        #     search_kwargs={"k":1, "score_threshold":0.3}
+        # )
         
-        return retriever.invoke(query)
-        
+        # return retriever.invoke(query)
+        results = self.vector_store.similarity_search_with_score(query, k=3)
+        for res, score in results:
+            print(f"* [SIM={score:3f}] [{res}]")
 
 
 
