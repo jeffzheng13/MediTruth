@@ -41,7 +41,7 @@ safety_settings = {
 }
 
 
-def get_health_facts_from_yt_url(url: str, temperature: int = 0, ):
+def get_health_facts_from_yt_url(url: str, temperature: int = 0):
     ydl_opts = {
         'format': 'm4a/bestaudio/best',
     }

@@ -29,7 +29,7 @@ def check_facts():
     #     return jsonify({"error": "Invalid YouTube link"}), 400
 
 
-    facts = get_health_facts_from_yt_url(url, gemini_key)
+    facts = get_health_facts_from_yt_url(url)
 
     wrapper = CustomPubMedAPIWrapper()
     mongo_conn = MongoWrapper()
@@ -49,6 +49,7 @@ def check_facts():
                 research_data = mongo_conn.retrieve_vector_store(fact["fact"])
 
         except Exception as e:
+            print(e)
             pass
         
         output = fact_check(
@@ -60,5 +61,5 @@ def check_facts():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
   
